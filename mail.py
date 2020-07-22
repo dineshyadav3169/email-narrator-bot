@@ -7,7 +7,7 @@ import os
 from playsound import playsound
 import time
 
-SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
+SCOPES = 'https://www.googleapis.com/auth/gmail.addons.current.message.readonly'
 
 def greets():
     hours = int(time.ctime().split()[3].split(':')[0])
@@ -31,24 +31,40 @@ def main():
 
 
     # Call the Gmail API to fetch INBOX
-    results = service.users().messages().list(userId='me',labelIds = ['INBOX']).execute()
-    messages = results.get('messages', [])
-
-    check_id = [messages[0]][0]['id']
-    while(1):
-
+    try:
         results = service.users().messages().list(userId='me',labelIds = ['INBOX']).execute()
+    except errors.HttpError:
+        pass
+
+    
+    messages = results.get('messages', [])
+    check_id = [messages[0]][0]['id']
+    
+    
+    while(1):
+        
+        try:
+            results = service.users().messages().list(userId='me',labelIds = ['INBOX']).execute()
+        except errors.HttpError:
+            pass
+        
         messages = results.get('messages', [])
 
         messagess = [messages[0]]
         
         if check_id!=[messages[0]][0]['id']:
             for message in messagess:
-                msg = service.users().messages().get(userId='me', id=message['id']).execute()
-                my_text = msg['snippet']
+                
+                try:
+                    msg = service.users().messages().get(userId='me', id=message['id']).execute()
+                except errors.HttpError:
+                    pass
+                start_mail_from = msg['payload']['headers'][17]['value'].find('<') - 1
+                from_mail = msg['payload']['headers'][17]['value'][0:start_mail_from]
 
-            print(my_text)
-            tts = gtts.gTTS(greets() + ',You have an,new Email ,' + my_text, lang='en')        
+                mail_subject = msg['payload']['headers'][20]['value']
+
+            tts = gtts.gTTS(greets() + ',You have an,new Email , from' + from_mail + '.' + ',' + '.' + mail_subject, lang='en')        
             tts.save("hello.mp3")
             playsound("hello.mp3")
             os.remove("hello.mp3")
@@ -56,6 +72,6 @@ def main():
             print('waiting..sync..')
 
         time.sleep(60)
-
+    
 main()
 #Done.
