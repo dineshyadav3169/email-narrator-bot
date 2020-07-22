@@ -39,8 +39,7 @@ def main():
     print('check 1')
     while (1):
         
-        messagess = [messages[0]]
-        if messagess[0]['id']==check_id:
+        if [messages[0]][0]['id']==check_id:
             print('waiting..sync..')
         else:
             check_id = messagess[0]['id']
@@ -52,7 +51,8 @@ def main():
             tts = gtts.gTTS(greets() + ',You have an,new Email ,' + my_text, lang='en')        
             tts.save("hello.mp3")
             playsound("hello.mp3")
-            
+            os.remove("hello.mp3")
+        messagess = [messages[0]] 
         time.sleep(60)
 
 main()
