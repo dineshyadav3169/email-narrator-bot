@@ -28,31 +28,33 @@ def main():
         flow = client.flow_from_clientsecrets('credentials.json', SCOPES)
         creds = tools.run_flow(flow, store)
     service = build('gmail', 'v1', http=creds.authorize(Http()))
-    
+
+
     # Call the Gmail API to fetch INBOX
     results = service.users().messages().list(userId='me',labelIds = ['INBOX']).execute()
     messages = results.get('messages', [])
 
-    messagess = [messages[1]]
-    check_id = messagess[0]['id']
+    check_id = [messages[0]][0]['id']
+    while(1):
 
-    print('check 1')
-    while (1):
+        results = service.users().messages().list(userId='me',labelIds = ['INBOX']).execute()
+        messages = results.get('messages', [])
+
+        messagess = [messages[0]]
         
-        if [messages[0]][0]['id']==check_id:
-            print('waiting..sync..')
-        else:
-            check_id = messagess[0]['id']
+        if check_id!=[messages[0]][0]['id']:
             for message in messagess:
                 msg = service.users().messages().get(userId='me', id=message['id']).execute()
                 my_text = msg['snippet']
-        
+
             print(my_text)
             tts = gtts.gTTS(greets() + ',You have an,new Email ,' + my_text, lang='en')        
             tts.save("hello.mp3")
             playsound("hello.mp3")
             os.remove("hello.mp3")
-        messagess = [messages[0]] 
+        else:
+            print('waiting..sync..')
+
         time.sleep(60)
 
 main()
